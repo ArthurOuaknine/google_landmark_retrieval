@@ -1,6 +1,6 @@
 """Class to load landmark data"""
 import os
-from landmark_retrieval.utils.configurable import Configurable
+from landmark.utils.configurable import Configurable
 
 class Landmark(Configurable):
     """Class to load dataset from Google"""
@@ -10,6 +10,6 @@ class Landmark(Configurable):
 
     def __init__(self, path_to_config):
         super(Landmark, self).__init__(path_to_config)
-        self.landmark_retrieval_home = os.environ["LANDMARK_RETRIEVAL_HOME"]
+        self.landmark_retrieval_home = os.environ["LANDMARK_HOME"]
         self.warehouse = self.config["data"]["warehouse"]
 
