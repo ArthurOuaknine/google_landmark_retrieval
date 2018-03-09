@@ -8,6 +8,7 @@
 *.so
 *.ini
 *.pyc
+*.cpython-36
 
 # Packages #
 ############
