@@ -8,7 +8,7 @@
 *.so
 *.ini
 *.pyc
-*.cpython-36
+__pycache__/
 
 # Packages #
 ############
