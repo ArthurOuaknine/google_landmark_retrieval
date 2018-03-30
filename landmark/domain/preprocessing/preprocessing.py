@@ -3,13 +3,21 @@
 import dask
 import numpy as np
 import cv2
-# from PIL import Image
-# from PIL import ImageFile
-
-# ImageFile.LOAD_TRUNCATED_IMAGES = True # helps for trancated images
 
 class LandmarkImage(object):
-    """Class to load and preprocess an image"""
+    """Class to load and preprocess an image
+
+    PARAMETERS
+    ----------
+    path: string
+        path to image
+    
+    RETURNS
+    -------
+    img: 3D numpy array
+        Preprocessed and resized image
+    """
+
     SIZE = (500, 500)
 
     def __init__(self, path):
@@ -22,16 +30,24 @@ class LandmarkImage(object):
 
     @property
     def _load(self):
-        # img = Image.open(self.path)
-        # img.thumbnail(self.SIZE, Image.ANTIALIAS)
-        # img = np.asarray(img)
         img = cv2.imread(self.path)
         img = cv2.resize(img, dsize=self.SIZE, interpolation=cv2.INTER_CUBIC)
         return img
 
 
 class LandmarkAlbum(object):
-    """Class to load an preprocess a list of images in parallel"""
+    """Class to load an preprocess a list of images in parallel
+
+    PARAMETERS
+    ----------
+    paths: pandas dataframe
+        dataframe with id as index and a path column
+
+    RETURNS
+    -------
+    album: 4D numpy array
+        Preprocessed and resized pool of images
+    """
 
     def __init__(self, paths):
         self.paths = paths
