@@ -8,7 +8,7 @@ class Batch(object):
         self.label = label
         self.nb_data = data.shape[0]
         self.batch_size = batch_size
-        self.nb_epoch = 1
+        self.nb_epoch = nb_epoch
         self.current_min = 0
         self.current_max = self.batch_size
         self.batch_data = self.data[:batch_size]
