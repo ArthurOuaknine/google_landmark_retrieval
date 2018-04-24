@@ -61,7 +61,7 @@ class AggregatedSiftAlbum(object):
 
     def load(self, file_name=None):
         """Method to compute the mean of the SIFT fetaures in parallel and structure it
-        Data has to be written in batch (memory/debugging issues) which is fixed to 1000.
+        Data has to be written in batch (memory/debugging issues) which is fixed to 50.
         
         PARAMETERS
         ----------
@@ -75,7 +75,7 @@ class AggregatedSiftAlbum(object):
         all_exceptions: list of strings
             image id which have not been loaded
         """
-        nb_batch = 1000
+        nb_batch = 50
         batch_size = int(np.ceil(self.nb_data/nb_batch))
         batch = Batch(batch_size, self.test_data)
 
@@ -128,6 +128,6 @@ def _preprocess(ind, content):
 def _parallel_load(data):
     mean_results = [_preprocess(ind, content) for ind, content in data.iterrows()]
     mean_results = dask.compute(mean_results)[0]
-    cleaned_results = [mean for mean in mean_results if isinstance(mean, str) is not True]
-    exceptions = [mean for mean in mean_results if isinstance(mean, str)]
+    cleaned_results = [mean for mean in mean_results if (not isinstance(mean, str) and mean is not None)]
+    exceptions = [mean for mean in mean_results if (isinstance(mean, str) or mean is None)]
     return cleaned_results, exceptions
