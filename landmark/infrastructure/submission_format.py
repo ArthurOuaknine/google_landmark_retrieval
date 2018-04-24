@@ -12,11 +12,13 @@ class Submission(object):
     ----------
     results: pandas dataframe
         dataframe with id in index and list of similar id in a column
-
+    exceptions: list of strings
+        list of the id of the images which have raised an exception
     """
 
-    def __init__(self, results):
+    def __init__(self, results, exceptions):
         self.results = results
+        self.exceptions = exceptions
         self._structure
 
     @property
@@ -25,6 +27,11 @@ class Submission(object):
             raise ValueError("Too much column in result data frame!")
         self.results.columns = ["images"]
         self.results["images"] = self.results["images"].apply(lambda x: " ".join(x))
+        self.results.index.name = "id"
+        self.exceptions = pd.DataFrame(exceptions, index=exceptions)
+        self.exceptions.columns = ["images"]
+        self.exceptions.index.name = "id"
+        self.results = pd.concat([self.results, self.exceptions], axis=0)
         return None
 
     def export(self, config_file, file_name="unkwnown.csv"):
