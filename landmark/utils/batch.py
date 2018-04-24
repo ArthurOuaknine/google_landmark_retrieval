@@ -3,14 +3,15 @@ import pandas as pd
 
 class Batch(object):
 
-    def __init__(self, batch_size, data, label=None, nb_epoch=1):
+    def __init__(self, batch_size, data, batch_start=0, label=None, nb_epoch=1):
         self.data = data
         self.label = label
         self.nb_data = data.shape[0]
         self.batch_size = batch_size
         self.nb_epoch = nb_epoch
-        self.current_min = 0
-        self.current_max = self.batch_size
+        self.batch_start = batch_start
+        self.current_min = self.batch_start*self.batch_size
+        self.current_max = (self.batch_start + 1)*self.batch_size
         self.batch_data = self.data[:batch_size]
         if self.label is not None:
             self.batch_label = self.label[:batch_size]
@@ -32,13 +33,13 @@ class Batch(object):
             self.batch_data = self.data[self.current_min:]
             if has_label:
                 self.batch_label = self.label[self.current_min:]
-            self.current_min = 0
             self.current_max = self.current_max - self.nb_data
             self.batch_data = pd.concat([self.batch_data, self.data[:self.current_max]],
-                                        axis=1)
+                                        axis=0)
             if has_label:
                 self.batch_label = pd.concat([self.batch_label, self.label[:self.current_max]],
-                                             axis=1)
+                                             axis=0)
+            self.current_min = self.current_max - self.batch_size
 
         else:
             self.batch_data = self.data[self.current_min:]
