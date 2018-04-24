@@ -28,7 +28,7 @@ class Submission(object):
         self.results.columns = ["images"]
         self.results["images"] = self.results["images"].apply(lambda x: " ".join(x))
         self.results.index.name = "id"
-        self.exceptions = pd.DataFrame(exceptions, index=exceptions)
+        self.exceptions = pd.DataFrame(self.exceptions, index=self.exceptions)
         self.exceptions.columns = ["images"]
         self.exceptions.index.name = "id"
         self.results = pd.concat([self.results, self.exceptions], axis=0)
