@@ -36,8 +36,22 @@ def test_next_3():
     path_to_fake_batch = os.path.join(directory, PATH_TO_FAKE_DATA2)
     expected_batch = pd.read_csv(path_to_fake_batch, sep=";", index_col="id")
     batch_size = 2
+    batch_start = 0
 
-    batch = Batch(batch_size, data, batch_start=0, label=None, nb_epoch=2)
+    batch = Batch(batch_size, data, batch_start=batch_start, label=None, nb_epoch=2)
     batch.next
+    truth_batch = batch.batch_data
+    assert truth_batch.equals(expected_batch)
+
+def test_next_4():
+    directory = os.environ["LANDMARK_HOME"]
+    path_to_data = os.path.join(directory, PATH_TO_FAKE_DATA)
+    data = pd.read_csv(path_to_data, sep=';', index_col="id")
+    path_to_fake_batch = os.path.join(directory, PATH_TO_FAKE_DATA2)
+    expected_batch = pd.read_csv(path_to_fake_batch, sep=";", index_col="id")
+    batch_size = 2
+    batch_start = 1
+
+    batch = Batch(batch_size, data, batch_start=batch_start, label=None, nb_epoch=2)
     truth_batch = batch.batch_data
     assert truth_batch.equals(expected_batch)

@@ -12,23 +12,27 @@ class Batch(object):
         self.batch_start = batch_start
         self.current_min = self.batch_start*self.batch_size
         self.current_max = (self.batch_start + 1)*self.batch_size
-        self.batch_data = self.data[:batch_size]
-        if self.label is not None:
-            self.batch_label = self.label[:batch_size]
+        self._create
 
     @property
     def next(self):
         self.current_min += self.batch_size
         self.current_max += self.batch_size
+        self._create
+
+    @property
+    def _create(self):
         if self.current_max > self.nb_data:
             if self.label is None:
-                self.end(has_label=False)
+                self._end(has_label=False)
             else:
-                self.end(has_label=True)
+                self._end(has_label=True)
         else:
             self.batch_data = self.data[self.current_min:self.current_max]
+            if self.label is not None:
+                self.batch_label = self.label[self.current_min:self.current_max]
 
-    def end(self, has_label):
+    def _end(self, has_label):
         if self.nb_epoch != 1:
             self.batch_data = self.data[self.current_min:]
             if has_label:
@@ -45,5 +49,7 @@ class Batch(object):
             self.batch_data = self.data[self.current_min:]
             if has_label:
                 self.batch_label = self.label[self.current_min:]
+            # Case where you should have only 1 epoch
+            # pointers are update to re-start from the beginning if it continues
             self.current_max = 0
             self.current_min = -self.batch_size
