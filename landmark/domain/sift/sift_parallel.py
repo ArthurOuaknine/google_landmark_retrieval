@@ -59,12 +59,14 @@ class AggregatedSiftAlbum(object):
         self.warehouse = Configurable(self.config_path).config["data"]["warehouse"]
         self.directory = os.path.join(self.warehouse, "sift")
 
-    def load(self, file_name=None):
+    def load(self, batch_start=0, file_name=None):
         """Method to compute the mean of the SIFT fetaures in parallel and structure it
         Data has to be written in batch (memory/debugging issues) which is fixed to 50.
         
         PARAMETERS
         ----------
+        batch_start: int (0 by default)
+            Start computing the sift features from a specific batch
         file_name: None by default. If the name is given (without .csv extension), the data are written
             True to write the results (mean and exceptions)
 
@@ -77,12 +79,13 @@ class AggregatedSiftAlbum(object):
         """
         nb_batch = 50
         batch_size = int(np.ceil(self.nb_data/nb_batch))
-        batch = Batch(batch_size, self.test_data)
+        batch = Batch(batch_size, self.test_data, batch_start=43)
 
-        for i in range(nb_batch):
+        for i in range(batch_start, nb_batch):
             print("***** Starting loading batch %s *****" %i)
             mean_sift_data, exceptions = _parallel_load(batch.batch_data)
             batch_indexes = list(batch.batch_data.index)
+
             for exception in exceptions:
                 batch_indexes.remove(exception)
             structured_mean_sift_data = pd.DataFrame(mean_sift_data, index=batch_indexes)
@@ -91,13 +94,13 @@ class AggregatedSiftAlbum(object):
             if isinstance(file_name, str):
                 _ = self._write_results(structured_mean_sift_data, exceptions, file_name, i)
 
-            if i == 0:
+            if i == batch_start:
                 all_structured_mean_sift_data = structured_mean_sift_data
                 all_exceptions = exceptions
             else:
                 all_structured_mean_sift_data = pd.concat([all_structured_mean_sift_data,
                                                            structured_mean_sift_data],
-                                                          axis=1)
+                                                          axis=0)
                 all_exceptions = all_exceptions + exceptions
             print("***** End batch %s *****" %i)
 
