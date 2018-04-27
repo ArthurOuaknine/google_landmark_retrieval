@@ -79,7 +79,7 @@ class AggregatedSiftAlbum(object):
         """
         nb_batch = 50
         batch_size = int(np.ceil(self.nb_data/nb_batch))
-        batch = Batch(batch_size, self.test_data, batch_start=43)
+        batch = Batch(batch_size, self.test_data)
 
         for i in range(batch_start, nb_batch):
             print("***** Starting loading batch %s *****" %i)
