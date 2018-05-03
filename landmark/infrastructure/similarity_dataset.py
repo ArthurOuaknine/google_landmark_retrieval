@@ -7,12 +7,15 @@ from landmark.utils.configurable import Configurable
 class SimilarityDataset(Configurable):
     """Class to generate and load a similarity (labelled) dataset"""
 
-    TRAIN_PATH = "recognition_challenge/train/train.csv"
+    TRAIN_PATH = "recognition_challenge/train"
+    IMAGES_PATH = "recognition_images/train/images"
 
     def __init__(self, path_to_config, file_name=None):
         super(SimilarityDataset, self).__init__(path_to_config)
         self.cls = self.__class__
         self.warehouse = self.config["data"]["warehouse"]
+        self.raw = self.config["data"]["raw"]
+        self.path_to_images = os.path.join(self.raw, self.cls.IMAGES_PATH)
         self.file_name = file_name
 
     def generate(self, nb_label_to_use=1000, nb_sample_by_label=100):
@@ -35,6 +38,8 @@ class SimilarityDataset(Configurable):
 
         columns = ["id1", "id2", "similarity"]
         similarity_data = pd.DataFrame(similarity_data, columns=columns)
+        similarity_data["path1"] = similarity_data["id1"].apply(lambda x: os.path.join(self.path_to_images, x + ".jpg"))
+        similarity_data["path2"] = similarity_data["id2"].apply(lambda x: os.path.join(self.path_to_images, x + ".jpg"))
 
         if self.file_name is not None:
             self._write(similarity_data, self.file_name)
@@ -43,14 +48,13 @@ class SimilarityDataset(Configurable):
 
     @property
     def load(self):
-        path = os.path.join(self.warehouse, self.file_name)
-        train_dataset = pd.read_csv(path)
+        path_to_write = os.path.join(self.warehouse, self.file_name)
+        train_dataset = pd.read_csv(path_to_write, sep=";")
         return train_dataset
-
     
     @property
     def _load_train(self):
-        path = os.path.join(self.warehouse, self.cls.TRAIN_PATH)
+        path = os.path.join(self.warehouse, self.cls.TRAIN_PATH, "train.csv")
         training_dataset = pd.read_csv(path, index_col="id")
         training_dataset.drop(["url"], axis=1, inplace=True)
         return training_dataset
@@ -63,5 +67,5 @@ class SimilarityDataset(Configurable):
 
     def _write(self, data, file_name):
         path = os.path.join(self.warehouse, self.cls.TRAIN_PATH, file_name)
-        data.to_csv(path, sep=";")
+        data.to_csv(path, sep=";", index=False)
         return None
