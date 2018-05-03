@@ -37,6 +37,16 @@ class Submission(object):
         return None
 
     def export(self, config_file, file_name="unkwnown.csv"):
+        """Method to export submission
+
+        PARAMETERS
+        ----------
+        config_file: str
+            path to config file
+        file_name: str (default = unkwnown.csv)
+            name of the file to write
+        """
+
         warehouse = Configurable(config_file).config["data"]["warehouse"]
         submission = os.path.join(warehouse, "submission", file_name)
         self.results.to_csv(submission, sep=",")
