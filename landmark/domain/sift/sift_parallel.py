@@ -15,10 +15,13 @@ class AggregatedSiftImage(object):
 
     PARAMETERS
     ----------
+    ind: str
+        index of the image (id) to return if there is an error computing sift features
     path: str
         path to the image to load
     """
-    def __init__(self, path):
+    def __init__(self, ind, path):
+        self.ind = ind
         self.path = path
         self.mean_sift = self._get_mean
 
@@ -41,6 +44,7 @@ class AggregatedSiftImage(object):
             return mean_sift
         except IndexError:
             print("Error computing mean of SIFT features with the following image: %s" % self.path)
+            return self.ind
 
 
 class AggregatedSiftAlbum(object):
@@ -79,7 +83,7 @@ class AggregatedSiftAlbum(object):
         """
         nb_batch = 50
         batch_size = int(np.ceil(self.nb_data/nb_batch))
-        batch = Batch(batch_size, self.test_data)
+        batch = Batch(batch_size, self.test_data, batch_start=batch_start)
 
         for i in range(batch_start, nb_batch):
             print("***** Starting loading batch %s *****" %i)
@@ -87,7 +91,10 @@ class AggregatedSiftAlbum(object):
             batch_indexes = list(batch.batch_data.index)
 
             for exception in exceptions:
-                batch_indexes.remove(exception)
+                try:
+                    batch_indexes.remove(exception)
+                except ValueError:
+                    print("%s not in the exception list" % str(exception))
             structured_mean_sift_data = pd.DataFrame(mean_sift_data, index=batch_indexes)
             structured_mean_sift_data.index.names = ["id"]
 
@@ -123,7 +130,7 @@ class AggregatedSiftAlbum(object):
 @dask.delayed
 def _preprocess(ind, content):
     try:
-        return AggregatedSiftImage(content["path"]).mean_sift
+        return AggregatedSiftImage(ind, content["path"]).mean_sift
     except (FileNotFoundError, cv2.error) as e:
         print("File not found: %s" % content["path"])
         return ind
