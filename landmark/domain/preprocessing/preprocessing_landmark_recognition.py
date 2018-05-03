@@ -28,9 +28,9 @@ class LandmarkRecognitionImages(object):
 
     @property
     def _load(self):
-        img1 = cv2.imread(self.path_imgs[0])
+        img1 = cv2.imread(self.paths[0])
         img1 = cv2.resize(img1, dsize=self.SIZE, interpolation=cv2.INTER_CUBIC)
-        img2 = cv2.imread(self.path_imgs[1])
+        img2 = cv2.imread(self.paths[1])
         img2 = cv2.resize(img2, dsize=self.SIZE, interpolation=cv2.INTER_CUBIC)
         return (img1, img2)
             
