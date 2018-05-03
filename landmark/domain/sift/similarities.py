@@ -20,8 +20,13 @@ class Similarities(object):
                                 n_jobs=-1).fit(self.data)
         _, indices = nbrs.kneighbors(self.data)
         neighbors = self.indexes[indices]
-        neighbors = [[list(neighbor)] for neighbor in neighbors]
-        results = pd.DataFrame(neighbors, index=self.indexes)
+        # neighbors = [[list(neighbor)] for neighbor in neighbors]
+        cleaned_neighbors = list()
+        for i in range(neighbors.shape[0]):
+            neighbor = set(neighbors[i])
+            neighbor.discard(self.indexes[i])
+            cleaned_neighbors.append([list(neighbor)])
+        results = pd.DataFrame(cleaned_neighbors, index=self.indexes)
         submission = Submission(results, self.exceptions)
         submission.export(self.path_to_config, file_name="sift_mean_similarities.csv")
         return results
