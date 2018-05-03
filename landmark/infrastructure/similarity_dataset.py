@@ -9,12 +9,13 @@ class SimilarityDataset(Configurable):
 
     TRAIN_PATH = "recognition_challenge/train/train.csv"
 
-    def __init__(self, path_to_config):
+    def __init__(self, path_to_config, file_name=None):
         super(SimilarityDataset, self).__init__(path_to_config)
         self.cls = self.__class__
         self.warehouse = self.config["data"]["warehouse"]
+        self.file_name = file_name
 
-    def generate(self, nb_label_to_use=1000, nb_sample_by_label=100, file_name=None):
+    def generate(self, nb_label_to_use=1000, nb_sample_by_label=100):
         training_dataset = self._load_train
         sorted_labels = list(training_dataset["landmark_id"].value_counts().index) # labels ordered by occurrence (descending)
         top_sorted_labels = sorted_labels[:nb_label_to_use]
@@ -35,10 +36,17 @@ class SimilarityDataset(Configurable):
         columns = ["id1", "id2", "similarity"]
         similarity_data = pd.DataFrame(similarity_data, columns=columns)
 
-        if file_name is not None:
-            self._write(similarity_data, file_name)
+        if self.file_name is not None:
+            self._write(similarity_data, self.file_name)
 
         return similarity_data
+
+    @property
+    def load(self):
+        path = os.path.join(self.warehouse, self.file_name)
+        train_dataset = pd.read_csv(path)
+        return train_dataset
+
     
     @property
     def _load_train(self):
