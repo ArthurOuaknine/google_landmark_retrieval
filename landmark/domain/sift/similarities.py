@@ -24,7 +24,7 @@ class Similarities(object):
         cleaned_neighbors = list()
         for i in range(neighbors.shape[0]):
             neighbor = set(neighbors[i])
-            neighbor.discard(indexes[i])
+            neighbor.discard(self.indexes[i])
             cleaned_neighbors.append([list(neighbor)])
         results = pd.DataFrame(cleaned_neighbors, index=self.indexes)
         submission = Submission(results, self.exceptions)

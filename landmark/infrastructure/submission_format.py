@@ -32,8 +32,8 @@ class Submission(object):
         self.exceptions.columns = ["images"]
         self.exceptions.index.name = "id"
         self.results = pd.concat([self.results, self.exceptions], axis=0)
-        if self.results.shape[0] != 117703:
-            raise ValueError("Results dataframe has wrong number of row !")
+        # if self.results.shape[0] != 117703:
+        # raise ValueError("Results dataframe has wrong number of row !")
         return None
 
     def export(self, config_file, file_name="unkwnown.csv"):
