@@ -48,7 +48,7 @@ class SimilarityDataset(Configurable):
 
     @property
     def load(self):
-        path_to_write = os.path.join(self.warehouse, self.file_name)
+        path_to_write = os.path.join(self.warehouse, self.cls.TRAIN_PATH, self.file_name)
         train_dataset = pd.read_csv(path_to_write, sep=";")
         return train_dataset
     
