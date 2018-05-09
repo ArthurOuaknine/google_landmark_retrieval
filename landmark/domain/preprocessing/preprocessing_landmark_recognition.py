@@ -65,8 +65,6 @@ class LandmarkRecognitionAlbum(object):
 
 @dask.delayed
 def _preprocess(ind, content):
-    # TODO: change return whith preprocessing
-    # return LandmarkImage(path).preprocess
     paths = (content["path1"], content["path2"])
     try:
         recognition = LandmarkRecognitionImages(paths)
