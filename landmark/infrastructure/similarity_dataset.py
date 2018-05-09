@@ -20,6 +20,20 @@ class SimilarityDataset(Configurable):
         self.file_name = file_name
 
     def generate(self, nb_label_to_use=1000, nb_sample_by_label=100):
+        """Method to generate a similarity dataset
+
+        PARAMETERS
+        ----------
+        nb_label_to_use: int (default=1000)
+            number of different label to use (max around 15000) by occurence
+        nb_sample_by_label: int (default=100)
+            number of random sample drawn by label
+
+        RETURNS
+        -------
+        similarity data: pandas dataframe
+            dataset of similar images
+        """
         training_dataset = self._load_train
         sorted_labels = list(training_dataset["landmark_id"].value_counts().index) # labels ordered by occurrence (descending)
         top_sorted_labels = sorted_labels[:nb_label_to_use]
@@ -49,12 +63,21 @@ class SimilarityDataset(Configurable):
 
     @property
     def load(self):
+        """Method to load a specific similarity dataset"""
         path_to_write = os.path.join(self.warehouse, self.cls.TRAIN_PATH, self.file_name)
         train_dataset = pd.read_csv(path_to_write, sep=";")
         return train_dataset
 
     def check_data_availability(self, data, name_clean_table=None):
-        """Create method to check if the data are available and to create a new table"""
+        """Create method to check if the data are available and to create a new table
+        
+        PARAMETERS
+        ----------
+        data: pandas dataframe
+            dataset of similar images
+        name_clean_table: str (default=None)
+            name of the new table to write
+        """
         available_images = glob.glob(os.path.join(self.path_to_images, "*.jpg"))
         clean_table = data[data["path1"].isin(available_images) & data["path2"].isin(available_images)]
         if name_clean_table is not None:
