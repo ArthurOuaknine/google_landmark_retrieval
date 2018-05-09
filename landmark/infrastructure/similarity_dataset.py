@@ -2,6 +2,7 @@
 
 import os
 import pandas as pd
+import glob
 from landmark.utils.configurable import Configurable
 
 class SimilarityDataset(Configurable):
@@ -51,6 +52,14 @@ class SimilarityDataset(Configurable):
         path_to_write = os.path.join(self.warehouse, self.cls.TRAIN_PATH, self.file_name)
         train_dataset = pd.read_csv(path_to_write, sep=";")
         return train_dataset
+
+    def check_data_availability(self, data, name_clean_table=None):
+        """Create method to check if the data are available and to create a new table"""
+        available_images = glob.glob(os.path.join(self.path_to_images, "*.jpg"))
+        clean_table = data[data["path1"].isin(available_images) & data["path2"].isin(available_images)]
+        if name_clean_table is not None:
+            self._write(clean_table, name_clean_table)
+        return clean_table
     
     @property
     def _load_train(self):
