@@ -16,22 +16,28 @@ class LandmarkRecognitionImages(object):
     
     """
 
-    SIZE = (500, 500)
+    SIZE = (299, 299)
 
     def __init__(self, paths):
         self.paths = paths
         self.imgs = self._load
 
-    def preprocess(self):
+    def _preprocess(self, img):
     # TODO: image preprocessing on the self.img attribute
-        pass
+        img = img.astype(float)
+        img /= 255.0
+        img -= 0.5
+        img *= 2.0
+        return img
 
     @property
     def _load(self):
         img1 = cv2.imread(self.paths[0])
         img1 = cv2.resize(img1, dsize=self.SIZE, interpolation=cv2.INTER_CUBIC)
+        img1 = self._preprocess(img1)
         img2 = cv2.imread(self.paths[1])
         img2 = cv2.resize(img2, dsize=self.SIZE, interpolation=cv2.INTER_CUBIC)
+        img2 = self._preprocess(img2)
         return (img1, img2)
             
 
@@ -41,7 +47,7 @@ class LandmarkRecognitionAlbum(object):
     PARAMETERS
     ----------
     paths: pandas dataframe
-        dataframe with id as index and a path column
+        dataframe with two columns of paths (two similar images)
 
     RETURNS
     -------
