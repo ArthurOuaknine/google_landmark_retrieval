@@ -5,7 +5,7 @@ from landmark.utils.configurable import Configurable
 
 class SmallSiamese(Configurable):
 
-    LOG_ENV = "siamese_logs/small_siamese/logs"
+    LOG_ENV = "siamese/small_siamese/logs"
 
     def __init__(self, path_to_config):
         super(SmallSiamese, self).__init__(path_to_config)
