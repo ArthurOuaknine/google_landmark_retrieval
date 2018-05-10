@@ -2,6 +2,8 @@ import os
 import pandas as pd
 import numpy as np
 import time
+from sklearn.model_selection import train_test_split
+
 from landmark.infrastructure.similarity_dataset import SimilarityDataset
 from landmark.domain.preprocessing.preprocessing_landmark_recognition import LandmarkRecognitionAlbum
 from landmark.domain.siamese.small_siamese import SmallSiamese
@@ -13,8 +15,7 @@ def structure_data(batch_imgs, index_batch):
     return batch
 
 def structure_labels(data):
-    labels = pd.DataFrame(data["similarity"])
-    labels.columns = ["similarity"]
+    labels = pd.DataFrame(data, columns=["similarity"])
     labels["similarity_env"] = 1 - labels["similarity"]
     labels = labels.as_matrix()
     return labels
@@ -24,25 +25,24 @@ if __name__=="__main__":
     path_to_config = os.path.join(directory, "config.ini")
     similarity_data_name = "clean_similarity_label10000_sample100.csv"
     data = SimilarityDataset(path_to_config, similarity_data_name).load
-    siamese = SmallSiamese(path_to_config)
+    X = data[["id1", "id2", "path1", "path2"]]
+    y = data["similarity"]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.001, random_state=42)
 
-    nb_batch = 10000
-    batch_size = int(np.ceil(data.shape[0]/nb_batch))
+    batch_size = 64
+    nb_batch = int(np.ceil(X_train.shape[0]/batch_size))
     nb_epoch = 1
     nb_iter = nb_epoch*nb_batch
+    log_name = "second_try"
 
-    batcher = Batch(batch_size, data, nb_epoch=nb_epoch)
-
+    train_batch = Batch(batch_size=batch_size, data=X_train, batch_start=0,
+                        label=y_train, nb_epoch=nb_epoch)
+    validation_batch = Batch(batch_size=batch_size, data=X_test, batch_start=0,
+                             label=y_test, nb_epoch=1)
+    siamese = SmallSiamese(path_to_config, log_name)
+    
     for i in range(nb_iter):
-        time1 = time.time()
-        batch_data = batcher.batch_data
-        batch_imgs, exceptions = LandmarkRecognitionAlbum(batch_data).load
-        batch_x1 = structure_data(batch_imgs, 0)
-        batch_x2 = structure_data(batch_imgs, 1)
-        labels = structure_labels(batch_data)
-        loss = siamese.train(batch_x1, batch_x2, labels, i)
-        time2 = time.time()
-        print("***** Loss at step %s: %s *****" %(i, str(loss)))
-        print("===> Running time: %s" % (str(time2-time1)))
-        print("**********")
-        # TODO: split train/validation, create method for test and add accuracy to tensorboard
+        loss = siamese.train(train_batch, i, nb_iter)
+
+        if i%20==0:
+            _ = siamese.validation(validation_batch, i, nb_iter)
