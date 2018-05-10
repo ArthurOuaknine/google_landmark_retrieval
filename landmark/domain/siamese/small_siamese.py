@@ -38,8 +38,8 @@ class SmallSiamese(Configurable):
                                                                           predictions=tf.argmax(self.y_pred, 1),
                                                                           name="accuracy_validation")
             # Cross entropy loss
-            self.cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.y_pred,
-                                                                         labels=self.y_)
+            self.cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.y_pred,
+                                                                            labels=self.y_)
             with tf.name_scope("cross_entropy"):
                 self.loss = tf.reduce_mean(self.cross_entropy)
 
@@ -60,6 +60,8 @@ class SmallSiamese(Configurable):
         self.stream_vars = tf.get_collection(tf.GraphKeys.LOCAL_VARIABLES, scope="accuracy_val")
         self.reset_ops_accuracy = tf.variables_initializer(self.stream_vars)
 
+        # Initialize variables
+        self.sess.run(tf.local_variables_initializer())
         self.sess.run(tf.global_variables_initializer())
 
     def train(self, batch_x1, batch_x2, batch_label, iteration):
@@ -67,7 +69,7 @@ class SmallSiamese(Configurable):
                                                feed_dict={self.x1: batch_x1,
                                                           self.x2: batch_x2,
                                                           self.y_: batch_label})
-        self.writer_train.add_sumary(summary, iteration)
+        self.writer_train.add_summary(summary, iteration)
         return loss_value
 
     def _network(self, x):
