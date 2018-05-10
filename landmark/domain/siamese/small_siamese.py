@@ -1,17 +1,21 @@
 """Class to creAate a small Siamese Neural Network"""
 import os
+import numpy as np
+import pandas as pd
 import tensorflow as tf
 from landmark.utils.configurable import Configurable
+from landmark.domain.preprocessing.preprocessing_landmark_recognition import LandmarkRecognitionAlbum
 
 class SmallSiamese(Configurable):
 
     LOG_ENV = "siamese/small_siamese/logs"
 
-    def __init__(self, path_to_config):
+    def __init__(self, path_to_config, log_name):
         super(SmallSiamese, self).__init__(path_to_config)
+        self.log_name = log_name
         self.cls = self.__class__
         self.warehouse = self.config["data"]["warehouse"]
-        self.path_to_logs = os.path.join(self.warehouse, self.cls.LOG_ENV)
+        self.path_to_logs = os.path.join(self.warehouse, self.cls.LOG_ENV, self.log_name)
         self.sess = tf.Session()
         tf.set_random_seed(42)
 
@@ -64,13 +68,52 @@ class SmallSiamese(Configurable):
         self.sess.run(tf.local_variables_initializer())
         self.sess.run(tf.global_variables_initializer())
 
-    def train(self, batch_x1, batch_x2, batch_label, iteration):
-        _, loss_value, summary = self.sess.run([self.optimizer, self.loss, self.summary_op],
-                                               feed_dict={self.x1: batch_x1,
-                                                          self.x2: batch_x2,
-                                                          self.y_: batch_label})
+    # def train(self, batch_x1, batch_x2, batch_label, iteration):
+    def train(self, train_batch, iteration, nb_iter):
+        X_train_batch = train_batch.batch_data
+        y_train_batch = train_batch.batch_label
+        batch_imgs, exceptions = LandmarkRecognitionAlbum(X_train_batch).load
+        batch_x1 = self._structure_data(batch_imgs, 0)
+        batch_x2 = self._structure_data(batch_imgs, 1)
+        batch_labels = self._structure_labels(y_train_batch)
+        _, loss, summary = self.sess.run([self.optimizer, self.loss, self.summary_op],
+                                         feed_dict={self.x1: batch_x1,
+                                                    self.x2: batch_x2,
+                                                    self.y_: batch_labels})
         self.writer_train.add_summary(summary, iteration)
-        return loss_value
+        print("***** Training Loss at step %s/%s: %s *****" % (iteration, nb_iter, str(loss)))
+        print("**********")
+        train_batch.next
+        return loss
+
+    def validation(self, val_batch, iteration, nb_iter):
+        accuracies = list()
+        nb_batch = int(np.ceil(val_batch.nb_data/val_batch.batch_size))
+
+        for i in range(nb_batch):
+            X_val_batch = val_batch.batch_data
+            y_val_batch = val_batch.batch_label
+            batch_imgs, exceptions = LandmarkRecognitionAlbum(X_val_batch).load
+            batch_x1 = self._structure_data(batch_imgs, 0)
+            batch_x2 = self._structure_data(batch_imgs, 1)
+            batch_labels = self._structure_labels(y_val_batch)
+
+            self.sess.run(self.reset_ops_accuracy)
+            self.sess.run([self.accuracy_update],
+                          feed_dict={self.x1: batch_x1,
+                                     self.x2: batch_x2,
+                                     self.y_: batch_labels})
+            current_accuracy, summary = self.sess.run([self.accuracy, self.summary_op],
+                                                      feed_dict={self.x1: batch_x1,
+                                                                 self.x2: batch_x2,
+                                                                 self.y_: batch_labels})
+            self.writer_train.add_summary(summary, iteration)
+            accuracies.append(current_accuracy)
+
+        accuracy = np.mean(accuracies)
+        print("***** Validation (Mean) Accuracy at Iteration %s/%s: %s" % (iteration, nb_iter, str(accuracy)))
+        print("***********")
+        return accuracy
 
     def _network(self, x):
         """Define CNN architecture"""
@@ -122,3 +165,14 @@ class SmallSiamese(Configurable):
             layer = tf.matmul(x, W) + b
             layer = tf.nn.relu(layer)
             return layer
+
+    def _structure_data(self, batch_imgs, index_batch):
+        batch = [batch_im[index_batch] for batch_im in batch_imgs]
+        batch = np.expand_dims(batch, axis=0)[0]
+        return batch
+
+    def _structure_labels(self, data):
+        labels = pd.DataFrame(data, columns=["similarity"])
+        labels["similarity_env"] = 1 - labels["similarity"]
+        labels = labels.as_matrix()
+        return labels
