@@ -106,6 +106,8 @@ class SmallSiamese(Configurable):
         batch_x1 = self._structure_data(batch_imgs, 0)
         batch_x2 = self._structure_data(batch_imgs, 1)
         batch_labels = self._structure_labels(y_train_batch)
+        batch_labels = np.delete(batch_labels, exceptions, axis=0) # Delete labels of unloaded images
+
         _, loss, summary = self.sess.run([self.optimizer, self.loss, self.summary_op],
                                          feed_dict={self.x1: batch_x1,
                                                     self.x2: batch_x2,
@@ -128,6 +130,7 @@ class SmallSiamese(Configurable):
             batch_x1 = self._structure_data(batch_imgs, 0)
             batch_x2 = self._structure_data(batch_imgs, 1)
             batch_labels = self._structure_labels(y_val_batch)
+            batch_labels = np.delete(batch_labels, exceptions, axis=0) # Delete labels of unloaded images
 
             self.sess.run(self.reset_ops_accuracy)
             self.sess.run([self.accuracy_update],
