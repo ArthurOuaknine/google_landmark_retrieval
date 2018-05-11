@@ -49,3 +49,5 @@ if __name__=="__main__":
 
         if i%20==0:
             _ = siamese.validation(validation_batch, i, nb_iter)
+
+    _ = siamese.save(i)

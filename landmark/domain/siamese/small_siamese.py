@@ -9,11 +9,13 @@ from landmark.domain.preprocessing.preprocessing_landmark_recognition import Lan
 class SmallSiamese(Configurable):
 
     LOG_ENV = "siamese/small_siamese/logs"
+    MODEL_ENV = "siamese/small_siamese/models"
 
     def __init__(self, path_to_config, init_file):
         super(SmallSiamese, self).__init__(path_to_config)
         self.init_file = init_file
         self.log_name = self.init_file["log_name"]
+        self.model_name = self.init_file["model_name"]
         self.nb_data_train = self.init_file["nb_data_train"]
         self.batch_size = self.init_file["batch_size"]
         self.init_learning_rate = self.init_file["init_learning_rate"]
@@ -22,6 +24,7 @@ class SmallSiamese(Configurable):
         self.cls = self.__class__
         self.warehouse = self.config["data"]["warehouse"]
         self.path_to_logs = os.path.join(self.warehouse, self.cls.LOG_ENV, self.log_name)
+        self.path_to_models = os.path.join(self.warehouse, self.cls.MODEL_ENV, self.model_name)
         self.sess = tf.Session()
         tf.set_random_seed(42)
 
@@ -80,6 +83,9 @@ class SmallSiamese(Configurable):
         # Initialize variables
         self.sess.run(tf.local_variables_initializer())
         self.sess.run(tf.global_variables_initializer())
+
+        # Add ops to save and restore all variables
+        self.saver = tf.train.Saver()
 
     def train(self, train_batch, iteration, nb_iter):
         """
@@ -148,6 +154,17 @@ class SmallSiamese(Configurable):
         print("***** Validation (Mean) Accuracy at Iteration %s/%s: %s" % (iteration, nb_iter, str(accuracy)))
         print("***********")
         return accuracy
+
+    def save(self, iteration):
+        """Wrapper to save the model"""
+        self.saver.save(self.sess, self.path_to_models, global_step=iteration)
+        print("The model has been saved here: %s" % path_to_models)
+        return None
+
+    def load(self):
+        """Wrapper to load a model, it will be the model associated to the name in the init_file"""
+        self.saver.restore(self.sess, self.path_to_models)
+        return None
 
     def _network(self, x):
         """Define CNN architecture"""
