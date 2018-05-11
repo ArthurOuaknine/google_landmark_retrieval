@@ -172,17 +172,44 @@ class SmallSiamese(Configurable):
         conv1 = self._get_conv2d(x, self._get_weight_variable([3, 3, 3, 32], "weight1"),
                                  self._get_bias_variable([32], "bias1"),
                                  "conv1")
-        pool1 = self._get_maxpool2d(conv1, "pool1")
 
-        conv2 = self._get_conv2d(pool1, self._get_weight_variable([3, 3, 32, 64], "weight2"),
-                                 self._get_bias_variable([64], "bias2"),
+        conv2 = self._get_conv2d(conv1, self._get_weight_variable([3, 3, 32, 32], "weight2"),
+                                 self._get_bias_variable([32], "bias2"),
                                  "conv2")
-        pool2 = self._get_maxpool2d(conv2, "pool2")
 
-        conv3 = self._get_conv2d(pool2, self._get_weight_variable([3, 3, 64, 128], "weight3"),
-                                 self._get_bias_variable([128], "bias3"),
+        conv3 = self._get_conv2d(conv2, self._get_weight_variable([3, 3, 32, 32], "weight3"),
+                                 self._get_bias_variable([32], "bias3"),
                                  "conv3")
-        pool3 = self._get_maxpool2d(conv3, "pool3")
+
+        pool1 = self._get_maxpool2d(conv3, "pool1")
+
+        conv4 = self._get_conv2d(pool1, self._get_weight_variable([3, 3, 32, 64], "weight4"),
+                                 self._get_bias_variable([64], "bias4"),
+                                 "conv4")
+
+        conv5 = self._get_conv2d(conv4, self._get_weight_variable([3, 3, 64, 64], "weight5"),
+                                 self._get_bias_variable([64], "bias5"),
+                                 "conv5")
+
+        conv6 = self._get_conv2d(conv5, self._get_weight_variable([3, 3, 64, 64], "weight6"),
+                                 self._get_bias_variable([64], "bias6"),
+                                 "conv6")
+
+        pool2 = self._get_maxpool2d(conv6, "pool2")
+
+        conv7 = self._get_conv2d(pool2, self._get_weight_variable([3, 3, 64, 128], "weight7"),
+                                 self._get_bias_variable([128], "bias7"),
+                                 "conv7")
+
+        conv8 = self._get_conv2d(conv7, self._get_weight_variable([3, 3, 128, 128], "weight8"),
+                                 self._get_bias_variable([128], "bias8"),
+                                 "conv8")
+
+        conv9 = self._get_conv2d(conv8, self._get_weight_variable([3, 3, 128, 128], "weight9"),
+                                 self._get_bias_variable([128], "bias9"),
+                                 "conv9")
+
+        pool3 = self._get_maxpool2d(conv9, "pool3")
         
         return tf.contrib.layers.flatten(pool3, "embedding")
 

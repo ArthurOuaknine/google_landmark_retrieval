@@ -16,7 +16,7 @@ if __name__=="__main__":
     path_to_config = os.path.join(directory, "config.ini")
     warehouse = Configurable(path_to_config).config["data"]["warehouse"]
     directory_to_init_file = "siamese/small_siamese/init_files"
-    name_init_file = "init_small_siamese_testing.json"
+    name_init_file = "init_small_siamese_alexnet.json"
     path_to_init_file = os.path.join(warehouse, directory_to_init_file, name_init_file)
 
     # Load an init file with all the mandatory parameters
