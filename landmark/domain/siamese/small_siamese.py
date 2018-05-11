@@ -10,9 +10,15 @@ class SmallSiamese(Configurable):
 
     LOG_ENV = "siamese/small_siamese/logs"
 
-    def __init__(self, path_to_config, log_name):
+    def __init__(self, path_to_config, init_file):
         super(SmallSiamese, self).__init__(path_to_config)
-        self.log_name = log_name
+        self.init_file = init_file
+        self.log_name = self.init_file["log_name"]
+        self.nb_data_train = self.init_file["nb_data_train"]
+        self.batch_size = self.init_file["batch_size"]
+        self.init_learning_rate = self.init_file["init_learning_rate"]
+        self.decay_rate = self.init_file["decay_rate"]
+        
         self.cls = self.__class__
         self.warehouse = self.config["data"]["warehouse"]
         self.path_to_logs = os.path.join(self.warehouse, self.cls.LOG_ENV, self.log_name)
@@ -47,13 +53,20 @@ class SmallSiamese(Configurable):
             with tf.name_scope("cross_entropy"):
                 self.loss = tf.reduce_mean(self.cross_entropy)
 
+            # Define optimizer with decreasing learning rate
+            self.batch_step = tf.Variable(0)
+            self.learning_rate = tf.train.exponential_decay(learning_rate=self.init_learning_rate,
+                                                            global_step=self.batch_step*self.batch_size,
+                                                            decay_steps=self.nb_data_train,
+                                                            decay_rate=self.decay_rate,
+                                                            staircase=True)
+
             with tf.variable_scope("train", reuse=tf.AUTO_REUSE): 
-                # TODO: adaptative LR
-                self.optimizer = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(self.loss)
+                self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.loss)
 
         # Create summary for loss
         tf.summary.scalar("loss", self.loss)
-        # tf.summary.scalar("learning_rate", self.learning_rate)
+        tf.summary.scalar("learning_rate", self.learning_rate)
         tf.summary.scalar("accuracy_val", self.accuracy)
         self.summary_op = tf.summary.merge_all()
 
@@ -68,8 +81,25 @@ class SmallSiamese(Configurable):
         self.sess.run(tf.local_variables_initializer())
         self.sess.run(tf.global_variables_initializer())
 
-    # def train(self, batch_x1, batch_x2, batch_label, iteration):
     def train(self, train_batch, iteration, nb_iter):
+        """
+        Method to train the small siamese network
+
+        PARAMETERS
+        ----------
+        train_batch: Batch object
+            object generating training batch (labels & data) at each iteration
+        iteration: int
+            value of the current iteration
+        nb_iter: int
+            value of the total number of iteration to do
+
+        RETURNS
+        -------
+        loss: float
+            loss value for a given training batch during the current iteration
+        """
+
         X_train_batch = train_batch.batch_data
         y_train_batch = train_batch.batch_label
         batch_imgs, exceptions = LandmarkRecognitionAlbum(X_train_batch).load
@@ -79,7 +109,8 @@ class SmallSiamese(Configurable):
         _, loss, summary = self.sess.run([self.optimizer, self.loss, self.summary_op],
                                          feed_dict={self.x1: batch_x1,
                                                     self.x2: batch_x2,
-                                                    self.y_: batch_labels})
+                                                    self.y_: batch_labels,
+                                                    self.batch_step: iteration})
         self.writer_train.add_summary(summary, iteration)
         print("***** Training Loss at step %s/%s: %s *****" % (iteration, nb_iter, str(loss)))
         print("**********")
@@ -167,11 +198,13 @@ class SmallSiamese(Configurable):
             return layer
 
     def _structure_data(self, batch_imgs, index_batch):
+        """Method to structure images to the exact format"""
         batch = [batch_im[index_batch] for batch_im in batch_imgs]
         batch = np.expand_dims(batch, axis=0)[0]
         return batch
 
     def _structure_labels(self, data):
+        """Method to structure labels to the exact format"""
         labels = pd.DataFrame(data, columns=["similarity"])
         labels["similarity_env"] = 1 - labels["similarity"]
         labels = labels.as_matrix()
